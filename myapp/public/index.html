@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="./stylesheets/style.css">
   <title>Kurshantering</title>
 </head>
+
 <body>
 
   <h1>Lista över kurser</h1>
-  
+
   <table id="courseTable">
     <tr>
       <th>ID</th>
@@ -18,7 +20,20 @@
       <th>Action</th>
     </tr>
   </table>
-  
+
+  <h2>Lägg till kurs</h2>
+  <form id="addCourseForm">
+    <label for="searchId">ID:</label>
+    <input type="text" id="searchId" name="searchId"><br><br>
+    <label for="courseId">KursID:</label>
+    <input type="text" id="courseId" name="courseId"><br><br>
+    <label for="courseName">Kursnamn:</label>
+    <input type="text" id="courseName" name="courseName"><br><br>
+    <label for="coursePeriod">Period:</label>
+    <input type="text" id="coursePeriod" name="coursePeriod"><br><br>
+    <input type="submit" value="Lägg till kurs">
+  </form>
+
   <script>
     // Hämta kurser från webbtjänsten och visa dem i tabellen
     fetch('http://localhost:3000/courses')
@@ -27,37 +42,110 @@
         const table = document.getElementById('courseTable');
         courses.forEach(course => {
           const row = table.insertRow(-1);
-          row.setAttribute('id', `course-${course.id}`);
+          row.setAttribute('id', `course-${course.searchId}`);
           row.innerHTML = `
-            <td>${course.id}</td>
+            <td>${course.searchId}</td>
             <td>${course.courseId}</td>
             <td>${course.courseName}</td>
             <td>${course.coursePeriod}</td>
-            <td><button onclick="deleteCourse(${course.id})">Radera</button></td>
+            <td><button onclick="deleteCourse(${course.searchId})">Radera</button></td>
           `;
         });
       })
       .catch(error => console.error('Error:', error));
-  
+
     // Funktion för att radera kurs med ett specifikt ID
-    function deleteCourse(id) {
-      fetch(`http://localhost:3000/courses/${id}`, {
+    function deleteCourse(searchId) {
+      fetch(`http://localhost:3000/courses/${searchId}`, {
         method: 'DELETE'
       })
-      .then(response => {
-        if (response.ok) {
-          // Ta bort motsvarande tabellrad
-          const deletedRow = document.getElementById(`course-${id}`);
-          if (deletedRow) {
-            deletedRow.remove();
+        .then(response => {
+          if (response.ok) {
+            // Ta bort motsvarande tabellrad
+            const deletedRow = document.getElementById(`course-${searchId}`);
+            if (deletedRow) {
+              deletedRow.remove();
+            }
+          } else {
+            console.error('Något gick fel vid borttagningen av kursen.');
           }
-        } else {
-          console.error('Något gick fel vid borttagningen av kursen.');
-        }
-      })
-      .catch(error => console.error('Error:', error));
+        })
+        .catch(error => console.error('Error:', error));
     }
+
+    // Lägg till en kurs när formuläret skickas
+    document.getElementById('addCourseForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      const searchId = document.getElementById('searchId').value;
+      const courseId = document.getElementById('courseId').value;
+      const courseName = document.getElementById('courseName').value;
+      const coursePeriod = document.getElementById('coursePeriod').value;
+
+      // Kontrollera om det nya sök-ID är i konflikt med det befintliga sök-ID
+      fetch(`http://localhost:3000/courses/${searchId}`)
+        .then(response => response.json())
+        .then(existingCourse => {
+          if (existingCourse && Object.keys(existingCourse).length !== 0) {
+            console.error('Kursen med detta ID finns redan.');
+            alert('Kursen med detta ID finns redan.');
+          } else {
+            // Om sök-ID:t är unikt, skicka en POST-förfrågan för att lägga till kursen
+            fetch('http://localhost:3000/courses', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ searchId, courseId, courseName, coursePeriod })
+            })
+              .then(response => {
+                if (response.ok) {
+                  return response.json();
+                }
+                throw new Error('Kunde inte lägga till kurs');
+              })
+              .then(data => {
+                // Efter att tillägget har lyckats, skaffa kurslistan igen för att uppdatera displayen.
+                refreshCourseList();
+              })
+              .catch(error => console.error('Error:', error));
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+
+    function refreshCourseList() {
+      fetch('http://localhost:3000/courses')
+        .then(response => response.json())
+        .then(courses => {
+          const table = document.getElementById('courseTable');
+          const tableRows = table.getElementsByTagName('tr');
+
+          // Remove all rows except the first (header) row
+          for (let i = tableRows.length - 1; i > 0; i--) {
+            tableRows[i].remove();
+          }
+
+          courses.forEach(course => {
+            const row = table.insertRow(-1);
+            row.setAttribute('id', `course-${course.searchId}`);
+            row.innerHTML = `
+              <td>${course.searchId}</td>
+              <td>${course.courseId}</td>
+              <td>${course.courseName}</td>
+              <td>${course.coursePeriod}</td>
+              <td><button onclick="deleteCourse(${course.searchId})">Radera</button></td>
+            `;
+          });
+
+          // Clear form input fields after repopulating the table
+          document.getElementById('addCourseForm').reset();
+
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
   </script>
-  
-  </body>
-  </html>
+
+</body>
+
+</html>

@@ -10,7 +10,7 @@ body {
   background-color: #f4f4f4;
 }
 
-h1 {
+h1, h2 {
   width: 100%;
   text-align: center;
 }
@@ -54,3 +54,41 @@ button {
 button:hover {
   background-color: #c0392b;
 }
+
+
+#addCourseForm {
+  border-collapse: collapse;
+  width: 40%;
+  margin: auto;
+  padding: 12px 15px;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+#addCourseForm label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+#addCourseForm input[type="text"] {
+  width: calc(100% - 20px);
+  padding: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+
+#addCourseForm input[type="submit"] {
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+#addCourseForm input[type="submit"]:hover {
+  background-color: #2980b9;
+}
+

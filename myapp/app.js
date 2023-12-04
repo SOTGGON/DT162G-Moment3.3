@@ -1,45 +1,36 @@
 const express = require('express');
 const path = require('path');
-const cors = require('cors');
+const mongoose = require('mongoose');
+const coursesRoutes = require('./routes/courses');
 
 const app = express();
 
-app.use(cors());
+// CORS middleware to allow cross-origin requests
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,PATCH,POST,DELETE');
+  next();
+});
+
+mongoose.connect('mongodb://localhost:27017/Moment3', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('Connection error:', err));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, 'public'))); // Lägg till den statiska mapp där HTML-fil finns
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/courses', coursesRoutes);
 
-const courses = require('./data/courses.json');
-
-// Visa alla kurser
-app.get('/courses', (req, res) => {
-    res.json(courses); // Returnera alla kurser som JSON
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
 
-// Visa en enskild kurs baserat på ID
-app.get('/courses/:id', (req, res) => {
-  const id = req.params.id;
-  const course = courses.find(course => course.id === parseInt(id));
-  if (!course) {
-    return res.status(404).send('Kursen hittades inte.');
-  }
-  res.json(course);
-});    
-
-// Radera en kurs baserat på ID
-app.delete('/courses/:id', (req, res) => {
-  const id = req.params.id;
-  const courseIndex = courses.findIndex(course => course.id === parseInt(id));
-  if (courseIndex === -1) {
-    return res.status(404).send('Kursen hittades inte.');
-  }
-  courses.splice(courseIndex, 1);
-  res.send('Kursen har raderats.');
+// Welcome route
+app.get('/', (req, res) => {
+  res.send('Welcome to the course management system');
 });
-
-
-app.listen(3000, function () {
-  console.log("Express server listening on port 3000");
-});
-
-module.exports = app;
