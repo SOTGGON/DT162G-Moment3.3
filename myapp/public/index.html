@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="./stylesheets/style.css">
+  <title>Kurshantering</title>
+</head>
+<body>
+
+  <h1>Lista över kurser</h1>
+  
+  <table id="courseTable">
+    <tr>
+      <th>ID</th>
+      <th>KursID</th>
+      <th>Kursnamn</th>
+      <th>Period</th>
+      <th>Action</th>
+    </tr>
+  </table>
+  
+  <script>
+    // Hämta kurser från webbtjänsten och visa dem i tabellen
+    fetch('http://localhost:3000/courses')
+      .then(response => response.json())
+      .then(courses => {
+        const table = document.getElementById('courseTable');
+        courses.forEach(course => {
+          const row = table.insertRow(-1);
+          row.setAttribute('id', `course-${course.id}`);
+          row.innerHTML = `
+            <td>${course.id}</td>
+            <td>${course.courseId}</td>
+            <td>${course.courseName}</td>
+            <td>${course.coursePeriod}</td>
+            <td><button onclick="deleteCourse(${course.id})">Radera</button></td>
+          `;
+        });
+      })
+      .catch(error => console.error('Error:', error));
+  
+    // Funktion för att radera kurs med ett specifikt ID
+    function deleteCourse(id) {
+      fetch(`http://localhost:3000/courses/${id}`, {
+        method: 'DELETE'
+      })
+      .then(response => {
+        if (response.ok) {
+          // Ta bort motsvarande tabellrad
+          const deletedRow = document.getElementById(`course-${id}`);
+          if (deletedRow) {
+            deletedRow.remove();
+          }
+        } else {
+          console.error('Något gick fel vid borttagningen av kursen.');
+        }
+      })
+      .catch(error => console.error('Error:', error));
+    }
+  </script>
+  
+  </body>
+  </html>
